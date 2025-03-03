@@ -11,10 +11,31 @@ using WebDriverManager.DriverConfigs.Impl;
 
 class Program
 {
+    public static void AutoLogin_Th_Th()
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine("[AutoLogin_Th] Run AutoLogin\n");
+        Console.ForegroundColor = ConsoleColor.White;
+        URL.AutoLoginURL = Console.ReadLine();
+        if (URL.AutoLoginURL.CheckURLValid())
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[AutoLogin_Th] Use AutoLogin : " + URL.AutoLoginURL + "\n");
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[AutoLogin_Th] Not Use AutoLogin\n");
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+    }
+
     static void Main()
     {
         XMethod method = new XMethod();
-
+        ThreadStart AutoLogin_Th_Th_Th = new ThreadStart(AutoLogin_Th_Th);
+        Thread childThread = new Thread(AutoLogin_Th_Th_Th);
     //输入邮箱+判断
     InputMail:
         Console.ForegroundColor = ConsoleColor.Blue;
@@ -40,24 +61,6 @@ class Program
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("[XGP Input] Email: " + AccStore[0] + "\n[XGP Input] Passwd: " + AccStore[1] + "\n");
         Console.ForegroundColor = ConsoleColor.White;
-
-         //判断是否使用Autologin
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("[AutoLogin Input] Use AutoLogin?\n[AutoLogin Input] if use , input LoginURL , Like <https://login.live.com/...>\n[AutoLogin Input] if not use , enter");
-        Console.ForegroundColor = ConsoleColor.White;
-        method.AutoLoginURL = Console.ReadLine();
-        if (method.AutoLoginURL.CheckURLValid())
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[AutoLogin Input] Use AutoLogin : " + method.AutoLoginURL + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-        else
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[AutoLogin Input] Not Use AutoLogin\n");
-            Console.ForegroundColor = ConsoleColor.White;
-        }
 
         //GetPlayerName
         FileStream LoaclConfig = new FileStream("MSAutoInfo.cfg", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -112,6 +115,13 @@ class Program
 
         //StartClient
         IWebDriver WebClient = new ChromeDriver(ClientOption);
+
+        //判断是否使用Autologin
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("[AutoLogin Input] Use AutoLogin?\n[AutoLogin Input] if use , input LoginURL , Like <https://login.live.com/...>\n[AutoLogin Input] if not use , enter");
+        Console.ForegroundColor = ConsoleColor.White;
+        childThread.Start();
+
 
     ReLoadURL:
         WebClient.Url = "https://www.minecraft.net/zh-hans/msaprofile/mygames/editprofile";
@@ -423,10 +433,10 @@ class Program
 
         //AutoLogin
     AutoLoginMethod:
-        if (method.AutoLoginURL.CheckURLValid())
+        if (URL.AutoLoginURL.CheckURLValid())
         {
             Thread.Sleep(800);
-            WebClient.Url = method.AutoLoginURL;
+            WebClient.Url = URL.AutoLoginURL;
             Thread.Sleep(800);
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine("[AutoLogin] AutoLogin\n");
@@ -494,7 +504,6 @@ class XMethod
     public string OldPlayerName;
     public string PlayerName;
     public int IswrongEmail = 0;
-    public string AutoLoginURL = "NoLogin";
     public int IsPlayerNameChange = 1;
     public int RandomLength;
     public string GetRandomName(int length, bool useNum, bool useLow, bool useUpp, bool useSpe, string custom)
@@ -526,4 +535,8 @@ static class URLValidator
         return Uri.TryCreate(source, UriKind.Absolute, out uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
     }
+}
+static class URL
+{
+    public static string AutoLoginURL = "NoLogin";
 }
