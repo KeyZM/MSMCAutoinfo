@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 //using System.Threading;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
-using ImGuiNET;
 //using System.IO;
 //using OpenQA.Selenium.DevTools.V131.FedCm;
 //using OpenQA.Selenium.Internal.Logging;
@@ -39,7 +38,7 @@ class Program
         string[] AccStore_Dahai = Regex.Split(AccInfo, ":", RegexOptions.IgnoreCase);
         if (AccStore.Length != 2)
         {
-            if (AccStore_Dahai.Length != 2) 
+            if (AccStore_Dahai.Length != 2 && AccStore_Dahai.Length !=3) 
             {
                 Output.OutputRed("Error XGP,Re-input\n");
                 goto InputMail;
@@ -50,39 +49,58 @@ class Program
             }
         }
         //Output.OutputYellow("[XGP Input] Email: " + AccStore[0] + "\n[XGP Input] Passwd: " + AccStore[1] + "\n");
-        
-
         //GetPlayerName
         FileStream LoaclConfig = new FileStream("MSAutoInfo.cfg", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
         StreamReader reader = new StreamReader(LoaclConfig, leaveOpen: true);
-        method.PlayerName = reader.ReadToEnd();
+        method.configstore = reader.ReadToEnd();
+        string[] ConfigInfos = Regex.Split(method.configstore, ";", RegexOptions.IgnoreCase);
+        if (ConfigInfos.Length > 1)
+        {
+            method.OldPlayerName = ConfigInfos[0];
+        }
         reader.Close();
         LoaclConfig.Position = 0;
     PlayerNameDec:
-        if (string.IsNullOrEmpty(method.PlayerName))
+        if ((method.OldPlayerName) == "Zayess")
         {
-            StreamWriter writer = new StreamWriter(LoaclConfig, leaveOpen: true);
             Output.OutputRed("Input PlayerName");
-            method.PlayerName = Console.ReadLine();
-            writer.Write(method.PlayerName);
-            writer.Close();
+            method.OldPlayerName = Console.ReadLine();
             goto PlayerNameDec;
         }
-        Output.OutputYellow("[XGP Input] Use PlayerName: " + method.PlayerName + "\n");
-        LoaclConfig.Close();
-        method.RandomLength = (15 - method.PlayerName.Length);
-        method.OldPlayerName = method.PlayerName;
-        method.PlayerName = method.PlayerName + "_" + method.GetRandomName(method.RandomLength, true, true, true, false, "");
+        Output.OutputYellow("[XGP Input] PlayerName: " + method.OldPlayerName + "\n");
 
-        //SkinPath
-        SkinPath:
-        if (!File.Exists(System.IO.Path.GetFullPath("skin.png")))
+    //SkinPath
+    SkinPath:
+        if (ConfigInfos.Length > 1)
         {
-            Output.OutputRed("Error: No skin.png\nPlz add skin.png in MSMCAutoinfo\n");
-            Thread.Sleep(5000);
+            if (ConfigInfos[1] == "False")
+            {
+                method.IsAutoSetSkin = false;
+            }
+        }else if (method.IsAutoSetSkin == false)
+        {
+            if (File.Exists(System.IO.Path.GetFullPath("skin.png")))
+            {
+                method.IsAutoSetSkin = true;
+            }
+            else
+            {
+                goto JumpSetSkin;
+            }
+        }
+        if (!(File.Exists(System.IO.Path.GetFullPath("skin.png"))) && method.IsAutoSetSkin == true)
+        {
+            Output.OutputRed("[SkinEditer] if you want to auto-set-skin,Plz add skin.png -> " + System.IO.Path.GetFullPath("skin.png") + "\nif not plz enter");
+            Console.ReadLine();
+            method.IsAutoSetSkin = false;
             goto SkinPath;
         }
-        //Output.OutputYellow("[SkinEditer] Skin path:" + System.IO.Path.GetFullPath("skin.png") + "\n");
+    //Output.OutputYellow("[SkinEditer] Skin path:" + System.IO.Path.GetFullPath("skin.png") + "\n");
+    JumpSetSkin:
+        StreamWriter writer = new StreamWriter(LoaclConfig, leaveOpen: true);
+        writer.Write(method.OldPlayerName + ";" + method.IsAutoSetSkin);
+        writer.Close();
+        LoaclConfig.Close();
 
         new DriverManager().SetUpDriver(new ChromeConfig());
         Output.OutputYellow("Loading...\n");
@@ -137,7 +155,7 @@ class Program
         }
         catch (OpenQA.Selenium.NoSuchElementException e)
         {
-            Output.OutputYellow("[Method Detector] OldMethod\n");
+            //Output.OutputYellow("[Method Detector] OldMethod\n");
             method.NewMethod = true;
             method.MethodVersion = "Old";
             try
@@ -151,7 +169,7 @@ class Program
             }
 
         }
-        Output.OutputYellow("[Method Detector] Use " + method.MethodVersion + "Method\n\n[Login] Input" + method.MethodVersion + "\n");
+        //Output.OutputYellow("[Method Detector] Use " + method.MethodVersion + "Method\n\n[Login] Input" + method.MethodVersion + "\n");
 
         //next
         if (method.NewMethod)
@@ -278,6 +296,7 @@ class Program
         //InputPlayerName
         //method.PlayerName = "Xiaolin0721_CEzC";//敏感词
         //method.PlayerName = "Xiaolin0721_7l6N";//重复
+        method.PlayerName = method.OldPlayerName + "_" + method.GetRandomName((15 - method.OldPlayerName.Length), true, true, true, false, "");
     SetNameError:
         Thread.Sleep(2000);
         try
@@ -318,6 +337,11 @@ class Program
         Thread.Sleep(2000);
 
     SetSkin:
+        if (method.IsAutoSetSkin == false)
+        {
+            //Output.OutputYellow("[SkinEditer] Skip\n");
+            goto AutoLoginMethod;
+        }
         WebClient.Url = "https://www.minecraft.net/zh-hans/msaprofile/mygames/editskin";
         try
         {
@@ -347,7 +371,7 @@ class Program
             if (method.IsPlayerNameChange == 2)
             {
                 Output.OutputYellow("[XGP Input] Changed XGPName\n");
-                method.PlayerName = method.OldPlayerName + "_" + method.GetRandomName(method.RandomLength, true, true, true, false, "");
+                method.PlayerName = method.OldPlayerName + "_" + method.GetRandomName((15 - method.OldPlayerName.Length), true, true, true, false, "");
             }
             goto SetNameError;
         }
@@ -408,13 +432,14 @@ class Program
 
 class XMethod
 {
+    public bool IsAutoSetSkin = true;
     public bool NewMethod = false;
     public string MethodVersion = "New";
-    public string OldPlayerName;
+    public string configstore;
+    public string OldPlayerName = "Zayess";
     public string PlayerName;
     public int IswrongEmail = 0;
     public int IsPlayerNameChange = 1;
-    public int RandomLength;
     public string GetRandomName(int length, bool useNum, bool useLow, bool useUpp, bool useSpe, string custom)
     {
         byte[] b = new byte[4];
@@ -436,18 +461,15 @@ class XMethod
         return s;
     }
 }
-static class URLValidator
+static class URL
 {
+    public static string AutoLoginURL = "NoLogin";
     public static bool CheckURLValid(this string source)
     {
         Uri uriResult;
         return Uri.TryCreate(source, UriKind.Absolute, out uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
     }
-}
-static class URL
-{
-    public static string AutoLoginURL = "NoLogin";
 }
 static class Output
 {
