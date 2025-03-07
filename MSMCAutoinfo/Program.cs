@@ -1,9 +1,10 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using System.Text.RegularExpressions;
-using System.Threading;
+//using System.Threading;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
+using ImGuiNET;
 //using System.IO;
 //using OpenQA.Selenium.DevTools.V131.FedCm;
 //using OpenQA.Selenium.Internal.Logging;
@@ -11,46 +12,36 @@ using WebDriverManager.DriverConfigs.Impl;
 
 class Program
 {
-    public static void AutoLogin_Th_Th()
+    public static void AutoLogin_Thread()
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("[AutoLogin_Th] Run AutoLogin\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputBlue("[AutoLogin Input] Use AutoLogin?\n[AutoLogin Input] if use , input LoginURL , Like <https://login.live.com/...>\n");
         URL.AutoLoginURL = Console.ReadLine();
         if (URL.AutoLoginURL.CheckURLValid())
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[AutoLogin_Th] Use AutoLogin : " + URL.AutoLoginURL + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputBlue("[AutoLogin] Use AutoLogin\n");
         }
         else
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("[AutoLogin_Th] Not Use AutoLogin\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[AutoLogin] Not Use AutoLogin\n");
         }
     }
 
     static void Main()
     {
         XMethod method = new XMethod();
-        ThreadStart AutoLogin_Th_Th_Th = new ThreadStart(AutoLogin_Th_Th);
-        Thread childThread = new Thread(AutoLogin_Th_Th_Th);
+        ThreadStart AutoLogin_ThreadStarter = new ThreadStart(AutoLogin_Thread);
+        Thread Autologin__Thread = new Thread(AutoLogin_ThreadStarter);
     //输入邮箱+判断
     InputMail:
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("[XGP Input] XGP input, like <email----password> Or <email:password>");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputBlue("[XGP Input] InPut a XGP, like <email----password> Or <email:password>");
         string AccInfo = Console.ReadLine();
         string[] AccStore = Regex.Split(AccInfo, "----", RegexOptions.IgnoreCase);
         string[] AccStore_Dahai = Regex.Split(AccInfo, ":", RegexOptions.IgnoreCase);
         if (AccStore.Length != 2)
         {
-            if (AccStore_Dahai.Length != 2)
+            if (AccStore_Dahai.Length != 2) 
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Error XGP,Re-input\n");
-                Console.ForegroundColor = ConsoleColor.White;
+                Output.OutputRed("Error XGP,Re-input\n");
                 goto InputMail;
             }
             else
@@ -58,9 +49,8 @@ class Program
                 AccStore = AccStore_Dahai;
             }
         }
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("[XGP Input] Email: " + AccStore[0] + "\n[XGP Input] Passwd: " + AccStore[1] + "\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        //Output.OutputYellow("[XGP Input] Email: " + AccStore[0] + "\n[XGP Input] Passwd: " + AccStore[1] + "\n");
+        
 
         //GetPlayerName
         FileStream LoaclConfig = new FileStream("MSAutoInfo.cfg", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
@@ -72,40 +62,30 @@ class Program
         if (string.IsNullOrEmpty(method.PlayerName))
         {
             StreamWriter writer = new StreamWriter(LoaclConfig, leaveOpen: true);
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Input PlayerName");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputRed("Input PlayerName");
             method.PlayerName = Console.ReadLine();
             writer.Write(method.PlayerName);
             writer.Close();
             goto PlayerNameDec;
         }
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("[XGP Input] Use PlayerName: " + method.PlayerName + "\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputYellow("[XGP Input] Use PlayerName: " + method.PlayerName + "\n");
         LoaclConfig.Close();
         method.RandomLength = (15 - method.PlayerName.Length);
         method.OldPlayerName = method.PlayerName;
         method.PlayerName = method.PlayerName + "_" + method.GetRandomName(method.RandomLength, true, true, true, false, "");
 
-    //SkinPath
-    SkinPath:
+        //SkinPath
+        SkinPath:
         if (!File.Exists(System.IO.Path.GetFullPath("skin.png")))
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Error: No skin.png\nPlz add skin.png in MSMCAutoinfo\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputRed("Error: No skin.png\nPlz add skin.png in MSMCAutoinfo\n");
             Thread.Sleep(5000);
             goto SkinPath;
         }
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("[SkinEditer] Skin path:" + System.IO.Path.GetFullPath("skin.png") + "\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        //Output.OutputYellow("[SkinEditer] Skin path:" + System.IO.Path.GetFullPath("skin.png") + "\n");
 
         new DriverManager().SetUpDriver(new ChromeConfig());
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("Loading/Downloading WebDriver,plz wait...\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputYellow("Loading...\n");
 
         //Options
         var ClientOption = new ChromeOptions();
@@ -117,47 +97,35 @@ class Program
         IWebDriver WebClient = new ChromeDriver(ClientOption);
 
         //判断是否使用Autologin
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("[AutoLogin Input] Use AutoLogin?\n[AutoLogin Input] if use , input LoginURL , Like <https://login.live.com/...>\n[AutoLogin Input] if not use , enter");
-        Console.ForegroundColor = ConsoleColor.White;
-        childThread.Start();
+        Autologin__Thread.Start();
 
 
     ReLoadURL:
         WebClient.Url = "https://www.minecraft.net/zh-hans/msaprofile/mygames/editprofile";
-
-        Console.WriteLine("\n");
         try
         {
             WebClient.FindElement(By.ClassName("MC_modal_close")).Click();
         }
         catch (OpenQA.Selenium.ElementNotInteractableException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[163JumpOut] Error" + e.Message + "\n[163JumpOut] Skipped");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("\n[163JumpOut] Error" + e.Message + "\n[163JumpOut] Skipped\n");
         }
         catch(OpenQA.Selenium.NoSuchElementException e1)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[163JumpOut] Error" + e1.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("\n[163JumpOut] Error" + e1.Message + "\n");
         }
 
     LoginBTN:
         Thread.Sleep(500);
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("[Login] Get LoginBtn\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        //Output.OutputYellow("[Login] Get LoginBtn\n");
         try
         {
             WebClient.FindElement(By.ClassName("mb-4")).Click();
         }
         catch (OpenQA.Selenium.NoSuchElementException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Clock Detector] Error: " + e.Message);
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Clock Detector] Error: " + e.Message + "\n");
+            Output.OutputYellow("[Clock Detector] Wait\n");
             goto LoginBTN;
         }
 
@@ -169,9 +137,7 @@ class Program
         }
         catch (OpenQA.Selenium.NoSuchElementException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[Method Detector] Error: " + e.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[Method Detector] OldMethod\n");
             method.NewMethod = true;
             method.MethodVersion = "Old";
             try
@@ -180,29 +146,23 @@ class Program
             }
             catch (OpenQA.Selenium.NoSuchElementException e1)
             {
-                Console.WriteLine("[Login] ReLoad because error: \n" + e1.Message);
+                Output.OutputRed("[Login] ReLoad\n");
                 goto ReLoadURL;
             }
 
         }
-        Console.ForegroundColor = ConsoleColor.Yellow;
-        Console.WriteLine("[Method Detector] Use " + method.MethodVersion + "Method\n\n[Login] Input" + method.MethodVersion + "\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputYellow("[Method Detector] Use " + method.MethodVersion + "Method\n\n[Login] Input" + method.MethodVersion + "\n");
 
         //next
         if (method.NewMethod)
         {
             WebClient.FindElement(By.XPath("//button[contains(@type,\"submit\")]")).Click();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Login] ButtonNew\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Login] ButtonNew\n");
         }
         else
         {
             WebClient.FindElement(By.Id("idSIButton9")).Click();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Login] ButtonOld\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Login] ButtonOld\n");
         }
 
     //Input Password
@@ -216,9 +176,7 @@ class Program
             }
             catch(OpenQA.Selenium.NoSuchElementException e)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[Clock Detector] Add SleepTime 0.5s To Detect Email\n");
-                Console.ForegroundColor = ConsoleColor.White;
+                Output.OutputYellow("[Clock Detector] Wait\n");
                 Thread.Sleep(500);
                 try
                 {
@@ -228,22 +186,16 @@ class Program
                 {
                     if (method.IswrongEmail == 3)
                     {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("[Login] Error Email\n\nDone,press enter to exit");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Output.OutputRed("[Login] Error Email\n\nDone,press enter to exit");
                         Console.ReadLine();
                         return;
                     }
                     ++method.IswrongEmail;
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("[Clock Detector] Wrong: Add SleepTime 0.5s To Detect Email\n");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    Output.OutputYellow("[Clock Detector] Wrong: Add SleepTime 0.5s To Detect Email\n");
                     goto InputPasswd;
                 }
             }
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Login] InputNew\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Login] InputNew\n");
         }
         else
         {
@@ -253,36 +205,27 @@ class Program
             }
             catch(OpenQA.Selenium.NoSuchElementException e)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("[Login] Wrong Email");
-                Console.ForegroundColor = ConsoleColor.Blue;
-                Console.WriteLine("Done,press enter to exit");
-                Console.ForegroundColor = ConsoleColor.White;
+                Output.OutputRed("[Login] Wrong Email\nDone,enter to exit");
                 Console.ReadLine();
                 return;
             }
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Login] InputOld\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Login] InputOld\n");
         }
 
         //Login
         if (method.NewMethod)
         {
             WebClient.FindElement(By.XPath("//button[contains(@type,\"submit\")]")).Click();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Login] ButtonNew\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Login] ButtonNew\n");
         }
         else
         {
             WebClient.FindElement(By.Id("idSIButton9")).Click();
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Login] ButtonOld\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[Login] ButtonOld\n");
         }
 
-        //iShowSkip
+    //iShowSkip
+    IShowSkip:
         Thread.Sleep(800);
         for (int i = 0; i < 5; i++)
         {
@@ -292,10 +235,13 @@ class Program
             }
             catch (OpenQA.Selenium.NoSuchElementException e)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[ShowSkiper] Error: " + e.Message + "\n");
-                Console.ForegroundColor = ConsoleColor.White;
+                //Output.OutputYellow("[ShowSkiper] Error: " + e.Message + "\n");
                 break;
+            }
+            catch (OpenQA.Selenium.StaleElementReferenceException e1)
+            {
+                Output.OutputYellow("[Clock Detector] Wait\n");
+                goto IShowSkip;
             }
         }
 
@@ -308,9 +254,7 @@ class Program
         }
         catch (OpenQA.Selenium.NoSuchElementException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Clock Detector] Error: " + e.Message);
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[Clock Detector] Wait\n");
             goto LoginState;
         }
 
@@ -323,15 +267,12 @@ class Program
         }
         catch (OpenQA.Selenium.ElementNotInteractableException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[163JumpOut] Error" + e.Message+ "\nSkipped");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[163JumpOut] Error" + e.Message + "\n");
         }
         catch(OpenQA.Selenium.NoSuchElementException e1)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[163JumpOut] Error" + e1.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("\n[163JumpOut] Error" + e1.Message + "\n");
+
         }
 
         //InputPlayerName
@@ -345,32 +286,24 @@ class Program
         }
         catch (OpenQA.Selenium.NoSuchElementException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[SetName] Error: " + e.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[SetName] Error\n");
             try
             {
                 WebClient.FindElement(By.ClassName("mb-4")).Click();
             }
             catch (OpenQA.Selenium.NoSuchElementException e1)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[SetName] Error: " + e1.Message + "\n");
-                Console.ForegroundColor = ConsoleColor.White;
+                Output.OutputYellow("[SetName] Wait\n");
                 goto SetNameError;
             }
             goto SetNameError;
         }
         catch (OpenQA.Selenium.InvalidElementStateException e1)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[SetName] Error: " + e1.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[SetSkin] Wait\n");
             goto SetSkin;
         }
-        Console.ForegroundColor = ConsoleColor.Blue;
-        Console.WriteLine("Now-PlayerName: " + method.PlayerName + "\n");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputBlue("Now-PlayerName: " + method.PlayerName + "\n");
 
         WebClient.FindElement(By.Id("change-java-profile-name")).SendKeys(method.PlayerName);
         try
@@ -379,9 +312,7 @@ class Program
         }
         catch(OpenQA.Selenium.ElementClickInterceptedException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[Clock Detector] Error: " + e.Message);
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[Clock Detector] Wait\n");
             goto SetNameError;
         }
         Thread.Sleep(2000);
@@ -394,13 +325,11 @@ class Program
         }
         catch (OpenQA.Selenium.ElementNotInteractableException e)
         {
-            Console.WriteLine("\n[163JumpOut] Error" + e.Message + "\nSkipped");
+            //Output.OutputYellow("\n[163JumpOut] Error" + e.Message + "\nSkipped");
         }
         catch(OpenQA.Selenium.NoSuchElementException e1)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("\n[163JumpOut] Error" + e1.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("\n[163JumpOut] Error" + e1.Message + "\n");
         }
         Thread.Sleep(3000);
         try
@@ -409,21 +338,15 @@ class Program
         }
         catch(OpenQA.Selenium.WebDriverArgumentException e)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[SkinEditer] Error: " + e.Message + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            //Output.OutputYellow("[SkinEditer] Error\n");
         }
         catch(OpenQA.Selenium.NoSuchElementException)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[XGP Input] is Change PlayerName Times: " + method.IsPlayerNameChange + "\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[XGP Input] Change PlayerName " + method.IsPlayerNameChange + "\n");
             ++method.IsPlayerNameChange;
             if (method.IsPlayerNameChange == 2)
             {
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[XGP Input] Changed XGPName\n");
-                Console.ForegroundColor = ConsoleColor.White;
+                Output.OutputYellow("[XGP Input] Changed XGPName\n");
                 method.PlayerName = method.OldPlayerName + "_" + method.GetRandomName(method.RandomLength, true, true, true, false, "");
             }
             goto SetNameError;
@@ -438,9 +361,7 @@ class Program
             Thread.Sleep(800);
             WebClient.Url = URL.AutoLoginURL;
             Thread.Sleep(800);
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("[AutoLogin] AutoLogin\n");
-            Console.ForegroundColor = ConsoleColor.White;
+            Output.OutputYellow("[AutoLogin] AutoLogin\n");
             try
             {
                 WebClient.FindElement(By.Id("idBtn_Accept")).Click();
@@ -448,9 +369,7 @@ class Program
             catch(OpenQA.Selenium.NoSuchElementException e)
             {
                 //Myau
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine("[AutoLogin] Error: " + e.Message + "\n");
-                Console.ForegroundColor = ConsoleColor.White;
+                Output.OutputYellow("[AutoLogin] Error: " + e.Message + "\n");
                 try
                 {
                     string xpath = "//button[//div[contains(text(),'@outlook.com')]]";
@@ -458,9 +377,7 @@ class Program
                 }
                 catch(OpenQA.Selenium.NoSuchElementException e1)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("[AutoLogin] Error: " + e1.Message + "\n");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    Output.OutputYellow("[AutoLogin] Error: " + e1.Message + "\n");
                 }
                 Thread.Sleep(500);
             LoginClockAdd:
@@ -471,27 +388,19 @@ class Program
                 }
                 catch (OpenQA.Selenium.NoSuchElementException e1)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("[Clock Detector] Error: " + e1 + "\n");
-                    Console.ForegroundColor = ConsoleColor.White;
+                    Output.OutputYellow("[Clock Detector] Error: " + e1 + "\n");
                     try
                     {
                         WebClient.FindElement(By.Id("//input[contains(@class,\"btn btn-block btn-primary\")]")).Click();
                     }
                     catch(OpenQA.Selenium.NoSuchElementException e2)
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.WriteLine("[Clock Detector] Error: " + e2 + "\n");
-                        Console.ForegroundColor = ConsoleColor.White;
-                        goto LoginClockAdd;
+                        //Output.OutputYellow("[Clock Detector] Wait\n");
                     }
                 }
             }
         }
-
-        Console.ForegroundColor= ConsoleColor.Blue;
-        Console.WriteLine("Done,press enter to exit");
-        Console.ForegroundColor = ConsoleColor.White;
+        Output.OutputBlue("Done,enter to exit");
         Console.ReadLine();
         WebClient.Quit();
     }
@@ -539,4 +448,25 @@ static class URLValidator
 static class URL
 {
     public static string AutoLoginURL = "NoLogin";
+}
+static class Output
+{
+    public static void OutputRed(string Msg)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine(Msg);
+        Console.ForegroundColor = ConsoleColor.White;
+    }
+    public static void OutputBlue(string Msg)
+    {
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine(Msg);
+        Console.ForegroundColor = ConsoleColor.White;
+    }
+    public static void OutputYellow(string Msg)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine(Msg);
+        Console.ForegroundColor = ConsoleColor.White;
+    }
 }
